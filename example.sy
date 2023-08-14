@@ -1,9 +1,8 @@
-int func()
-{
-  return 5;
-}
 int main()
 {
-  int a=func();
+  starttime();
+  int a=5;
+  putint(a);
+  stoptime();
   return 0;
 }

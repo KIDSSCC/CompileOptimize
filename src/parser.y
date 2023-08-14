@@ -3,7 +3,7 @@
     #include <cstring>
     #include <assert.h>
     #include "parser.h"
-
+    using namespace std;
     //来自main.cpp
     extern Ast ast;
     int yylex();
@@ -243,7 +243,7 @@ UnaryExp
         $$=$2;
     }
     | SUB UnaryExp {
-        SymbolEntry* se;
+        SymbolEntry* se=nullptr;
         if($2->getSymPtr()->getType()->isIndirectFloat())
         {
             se = new TemporarySymbolEntry(TypeSystem::floatType, SymbolTable::getLabel());
@@ -1130,16 +1130,35 @@ FunArrayIndex
     ;
 FuncCall
     : ID LPAREN ParaList RPAREN {
-        //要做的是，新建一个函数调用节点，需要包含的信息是函数名的符号表项，以及各个参数的符号表项
-        SymbolEntry *se;
-        se = identifiers->lookup($1);
-        //函数没有被声明过
-        if(se == nullptr)
+        //判断是不是时间相关函数
+        string start_prefix=string($1).substr(0,15);
+        string stop_prefix=string($1).substr(0,14);
+        if(start_prefix=="_sysy_starttime")
         {
-            fprintf(stderr, "function %s is undeclared\n", (char*)$1);
-            exit(EXIT_FAILURE);
+            SymbolEntry *se= identifiers->lookup(start_prefix);
+            int lineno=stoi(string($1).substr(15,string($1).length()));
+            SymbolEntry* param = new ConstantSymbolEntry(TypeSystem::intType, lineno);    
+            $$ = new FunctionCall(se,new Constant(param));
         }
-        $$=new FunctionCall(se,$3);
+        else if(stop_prefix=="_sysy_stoptime")
+        {
+            SymbolEntry *se= identifiers->lookup(stop_prefix);
+            int lineno=stoi(string($1).substr(14,string($1).length()));
+            SymbolEntry* param = new ConstantSymbolEntry(TypeSystem::intType, lineno);    
+            $$ = new FunctionCall(se,new Constant(param));
+        }
+        else
+        {
+            //要做的是，新建一个函数调用节点，需要包含的信息是函数名的符号表项，以及各个参数的符号表项
+            SymbolEntry *se= identifiers->lookup($1);
+            //函数没有被声明过
+            if(se == nullptr)
+            {
+                fprintf(stderr, "function %s is undeclared\n", (char*)$1);
+                exit(EXIT_FAILURE);
+            }
+            $$=new FunctionCall(se,$3);
+        }
     }
     ;
 ParaList

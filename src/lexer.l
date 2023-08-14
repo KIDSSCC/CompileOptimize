@@ -260,6 +260,52 @@ SINGLECOMMENT \/\/[^\n]*
     yylval.ftype = value;
     return FLOATNUMBER;
 }
+"starttime" {
+    string func_name="_sysy_starttime";
+    string message=func_name+std::to_string(yylineno);
+    char *lexeme= new char[strlen(func_name.c_str()) + 1];
+    char *message_lexeme=new char[strlen(message.c_str())+1];
+    strcpy(lexeme, func_name.c_str());
+    strcpy(message_lexeme,message.c_str());
+    
+    yylval.strtype = message_lexeme;
+    SymbolEntry *se= identifiers->lookup(lexeme);
+    if(se==nullptr)
+    {
+        vector<Type*> vec;
+        vec.push_back(TypeSystem::intType);
+        Type* funcType = new FunctionType(TypeSystem::voidType, vec);
+        SymbolTable* st = identifiers;
+        while(st->getPrev())
+            st = st->getPrev();
+        SymbolEntry* se = new IdentifierSymbolEntry(funcType, func_name, st->getLevel());//不输就是默认-1，也可显式写出
+        st->install(func_name, se);
+    }
+    return ID;
+}
+"stoptime" {
+    string func_name="_sysy_stoptime";
+    string message=func_name+std::to_string(yylineno);
+    char *lexeme= new char[strlen(func_name.c_str()) + 1];
+    char *message_lexeme=new char[strlen(message.c_str())+1];
+    strcpy(lexeme, func_name.c_str());
+    strcpy(message_lexeme,message.c_str());
+    
+    yylval.strtype = message_lexeme;
+    SymbolEntry *se= identifiers->lookup(lexeme);
+    if(se==nullptr)
+    {
+        vector<Type*> vec;
+        vec.push_back(TypeSystem::intType);
+        Type* funcType = new FunctionType(TypeSystem::voidType, vec);
+        SymbolTable* st = identifiers;
+        while(st->getPrev())
+            st = st->getPrev();
+        SymbolEntry* se = new IdentifierSymbolEntry(funcType, func_name, st->getLevel());//不输就是默认-1，也可显式写出
+        st->install(func_name, se);
+    }
+    return ID;
+}
 
 "getint" {
     //一定要在当前作用域查一下有没有这个getint名字，没有则置入
@@ -483,7 +529,7 @@ SINGLECOMMENT \/\/[^\n]*
     yylval.strtype = lexeme;
     return ID;
 }
-{EOL} yylineno++;
+{EOL}
 {WHITE}
 {SINGLECOMMENT}   {}
 {COMMENTBEGIN} {BEGIN BLOCKCOMMENT;}
