@@ -70,7 +70,7 @@
     #include <cstring>
     #include <assert.h>
     #include "parser.h"
-
+    using namespace std;
     //来自main.cpp
     extern Ast ast;
     int yylex();
@@ -622,7 +622,7 @@ static const yytype_int16 yyrline[] =
      373,   376,   396,   396,   441,   515,   578,   578,   629,   632,
      637,   640,   646,   649,   653,   656,   674,   694,   729,   729,
      779,   846,   913,   913,   974,   977,   983,   990,   983,  1037,
-    1041,  1044,  1047,  1064,  1123,  1126,  1132,  1146,  1150,  1151
+    1041,  1044,  1047,  1064,  1123,  1126,  1132,  1165,  1169,  1170
 };
 #endif
 
@@ -1655,7 +1655,7 @@ yyreduce:
   case 41: /* UnaryExp: SUB UnaryExp  */
 #line 245 "src/parser.y"
                    {
-        SymbolEntry* se;
+        SymbolEntry* se=nullptr;
         if((yyvsp[0].exprtype)->getSymPtr()->getType()->isIndirectFloat())
         {
             se = new TemporarySymbolEntry(TypeSystem::floatType, SymbolTable::getLabel());
@@ -2804,43 +2804,62 @@ yyreduce:
   case 106: /* FuncCall: ID LPAREN ParaList RPAREN  */
 #line 1132 "src/parser.y"
                                 {
-        //要做的是，新建一个函数调用节点，需要包含的信息是函数名的符号表项，以及各个参数的符号表项
-        SymbolEntry *se;
-        se = identifiers->lookup((yyvsp[-3].strtype));
-        //函数没有被声明过
-        if(se == nullptr)
+        //判断是不是时间相关函数
+        string start_prefix=string((yyvsp[-3].strtype)).substr(0,15);
+        string stop_prefix=string((yyvsp[-3].strtype)).substr(0,14);
+        if(start_prefix=="_sysy_starttime")
         {
-            fprintf(stderr, "function %s is undeclared\n", (char*)(yyvsp[-3].strtype));
-            exit(EXIT_FAILURE);
+            SymbolEntry *se= identifiers->lookup(start_prefix);
+            int lineno=stoi(string((yyvsp[-3].strtype)).substr(15,string((yyvsp[-3].strtype)).length()));
+            SymbolEntry* param = new ConstantSymbolEntry(TypeSystem::intType, lineno);    
+            (yyval.exprtype) = new FunctionCall(se,new Constant(param));
         }
-        (yyval.exprtype)=new FunctionCall(se,(yyvsp[-1].exprtype));
+        else if(stop_prefix=="_sysy_stoptime")
+        {
+            SymbolEntry *se= identifiers->lookup(stop_prefix);
+            int lineno=stoi(string((yyvsp[-3].strtype)).substr(14,string((yyvsp[-3].strtype)).length()));
+            SymbolEntry* param = new ConstantSymbolEntry(TypeSystem::intType, lineno);    
+            (yyval.exprtype) = new FunctionCall(se,new Constant(param));
+        }
+        else
+        {
+            //要做的是，新建一个函数调用节点，需要包含的信息是函数名的符号表项，以及各个参数的符号表项
+            SymbolEntry *se= identifiers->lookup((yyvsp[-3].strtype));
+            //函数没有被声明过
+            if(se == nullptr)
+            {
+                fprintf(stderr, "function %s is undeclared\n", (char*)(yyvsp[-3].strtype));
+                exit(EXIT_FAILURE);
+            }
+            (yyval.exprtype)=new FunctionCall(se,(yyvsp[-1].exprtype));
+        }
     }
-#line 2819 "src/parser.cpp"
+#line 2838 "src/parser.cpp"
     break;
 
   case 107: /* ParaList: ParaList COMM Exp  */
-#line 1146 "src/parser.y"
+#line 1165 "src/parser.y"
                         {
         (yyval.exprtype) = (yyvsp[-2].exprtype);
         (yyvsp[-2].exprtype)->setNext((yyvsp[0].exprtype));        //设置next
     }
-#line 2828 "src/parser.cpp"
+#line 2847 "src/parser.cpp"
     break;
 
   case 108: /* ParaList: Exp  */
-#line 1150 "src/parser.y"
+#line 1169 "src/parser.y"
           { (yyval.exprtype)=(yyvsp[0].exprtype);}
-#line 2834 "src/parser.cpp"
+#line 2853 "src/parser.cpp"
     break;
 
   case 109: /* ParaList: %empty  */
-#line 1151 "src/parser.y"
+#line 1170 "src/parser.y"
              { (yyval.exprtype)=nullptr;}
-#line 2840 "src/parser.cpp"
+#line 2859 "src/parser.cpp"
     break;
 
 
-#line 2844 "src/parser.cpp"
+#line 2863 "src/parser.cpp"
 
       default: break;
     }
@@ -3033,7 +3052,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 1154 "src/parser.y"
+#line 1173 "src/parser.y"
 
 
 int yyerror(char const* message)

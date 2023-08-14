@@ -75,6 +75,7 @@ public:
 
 class FunctionType : public Type
 {
+    
 private:
     //函数类型中细分函数的返回值类型和函数的参数类型，最后一个参数列表怀疑冗余
     Type *returnType;
@@ -111,12 +112,14 @@ private:
 public:
     ArrayType( Type* artype,int num,bool ifconst=false) : Type(Type::ARRAY), artype(artype), num(num),ifconst(ifconst) 
     {
-        if(artype->isInt()) 
-            size=((IntType *)artype)->getSize() * num;
+        this->size=artype->getOSize()*num;
+        /*if(artype->isInt()) 
+            this->size=((IntType *)artype)->getSize() * num;
         if(artype->isFloat()) 
-            size=((FloatType *)artype)->getSize() * num;
+            this->size=((FloatType *)artype)->getSize() * num;
         if(artype->isArray()) 
-            size=((ArrayType *)artype)->getArraySize() * num;
+            this->size=((ArrayType *)artype)->getArraySize() * num;
+        */
     };
     std::string toStr();
     Type* getArrayType() const { return artype; };
