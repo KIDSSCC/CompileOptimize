@@ -793,7 +793,7 @@ void CmpInstruction::genMachineCode(AsmBuilder* builder)
     // TODO
     auto cur_block = builder->getBlock();
     MachineInstruction* cur_inst=nullptr;
-    MachineOperand*src1,*src2;
+    MachineOperand*src1,*src2; 
     src1=genMachineOperand(operands[1]);
     src2=genMachineOperand(operands[2]);
     if (src1->isImm())
@@ -839,16 +839,22 @@ void CmpInstruction::genMachineCode(AsmBuilder* builder)
             src2 = new MachineOperand(*internal_reg);
         }
     }
+    //默认已经完成了类型转换，此时这两个操作数的类型是相同的，判断谁都可以
     if(operands[1]->getType()->isFloat())
     {
-        //默认已经完成了类型转换，此时这两个操作数的类型是相同的，判断谁都可以
         cur_inst = new CmpMInstruction(CmpMInstruction::VCMP,cur_block, src1, src2, opcode);
     }
     else
+    {
         cur_inst = new CmpMInstruction(CmpMInstruction::CMP,cur_block, src1, src2, opcode);//debug!!enum的数值要对应上！！顺序一致才可！！
+    }
     cur_block->InsertInst(cur_inst);
     
-    if (opcode >= L && opcode <= LE) //debug:GE改LE
+
+
+
+
+    if (opcode >= E && opcode <= LE) //debug:GE改LE
     {
         //对于L，LE，G，GE，创建分支
         auto dst = genMachineOperand(operands[0]);
@@ -873,6 +879,12 @@ void CmpInstruction::genMachineCode(AsmBuilder* builder)
                 break;
             case GE:
                 cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, dst,falseOperand, L);
+                break;
+            case E:
+                cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, dst,falseOperand, NE);
+                break;
+            case NE:
+                cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, dst,falseOperand, E);
                 break;
 
         }

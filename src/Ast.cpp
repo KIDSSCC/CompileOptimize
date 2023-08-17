@@ -138,11 +138,16 @@ void FunctionDef::genCode()
             //if语句中在then和else中都设置了return，使得整个if语句的end块中没有指令了
             //也可以改进...应该？
             if (branch->empty()) {
-                if (((FunctionType*)(se->getType()))->getRetType() ==TypeSystem::intType)
+                auto ret_type=((FunctionType*)(se->getType()))->getRetType();
+                if (ret_type==TypeSystem::intType)
                 {
                     new RetInstruction(new Operand(new ConstantSymbolEntry(TypeSystem::intType, 0)),branch);
                 }
-                if (((FunctionType*)(se->getType()))->getRetType() ==TypeSystem::voidType)
+                else if(ret_type==TypeSystem::floatType)
+                {
+                    new RetInstruction(new Operand(new ConstantSymbolEntry(TypeSystem::floatType, 0)),branch);
+                }
+                else if (ret_type ==TypeSystem::voidType)
                 {
                     new RetInstruction(nullptr, branch);
                 }
@@ -2083,7 +2088,7 @@ BinaryExpr::BinaryExpr(SymbolEntry *se, int op, ExprNode*expr1, ExprNode*expr2 )
     //C++中发现取模运算只使用于整数，因此也就不考虑取模运算的类型转换
     Type * lefttype=expr1->getSymPtr()->getType();
     Type * righttype=expr2->getSymPtr()->getType();
-    //结果的类型转换
+    //结果的类型转换：加减乘除模
     if((op>=ADD)&&(op<MOD))
     {
         if((lefttype->isIndirectFloat())||(righttype->isIndirectFloat()))
@@ -2094,6 +2099,7 @@ BinaryExpr::BinaryExpr(SymbolEntry *se, int op, ExprNode*expr1, ExprNode*expr2 )
     //操作数的类型转换
     if((op==AND)||(op==OR))
     {
+        //与或运算全部转换为bool类型
         if(lefttype->isIndirectInt())this->expr1=new IntToBool(expr1);
         if(righttype->isIndirectInt())this->expr2=new IntToBool(expr2);
         if(lefttype->isIndirectFloat())this->expr1=new FloatToBool(expr1);
@@ -2101,47 +2107,16 @@ BinaryExpr::BinaryExpr(SymbolEntry *se, int op, ExprNode*expr1, ExprNode*expr2 )
     }
     else
     {
-        if (lefttype->isIndirectFloat() && righttype->isIndirectInt()) 
+        //算数运算，逻辑运算尽量转换为浮点
+        if (lefttype->isIndirectFloat() && (righttype->isIndirectInt()||righttype->isBool())) 
         {
             this->expr2=new IntToFloat(expr2,expr2->getValue()) ;
         }
-        if (lefttype->isIndirectInt() && righttype->isIndirectFloat())
+        if ((lefttype->isIndirectInt()||lefttype->isBool()) && righttype->isIndirectFloat())
         {
             this->expr1=new IntToFloat(expr1,expr1->getValue()) ;
         }
     }
 
-    /*
-    if(op == BinaryExpr::ADD || op == BinaryExpr::SUB || op == BinaryExpr::MUL || op == BinaryExpr::DIV || (op >= LT && op <= NE)){//暂时这样，之后有bug再补充
-        Type * lefttype=expr1->getSymPtr()->getType();
-        Type * righttype=expr2->getSymPtr()->getType();
-        if (expr1->getSymPtr()->getType()->isFunc() ){
-            FunctionType * ftype=( FunctionType *)(expr1->getSymPtr()->getType());
-            lefttype=ftype->getRetType(); 
-        }
-        if (expr2->getSymPtr()->getType()->isFunc() ){
-            FunctionType * ftype=( FunctionType *)(expr2->getSymPtr()->getType());
-            righttype=ftype->getRetType(); 
-        }
-        if (expr1->getSymPtr()->getType()->isArray() ){
-            ArrayType * atype=( ArrayType *)(expr1->getSymPtr()->getType());
-            lefttype=atype->getFinalType();
-              
-        }
-        if (expr2->getSymPtr()->getType()->isArray() ){
-            ArrayType * atype=( ArrayType *)(expr2->getSymPtr()->getType());
-           righttype=atype->getFinalType();
-   
-        }
-        if (lefttype->isFloat() && righttype->isInt()) {
-            this->expr2=new IntToFloat(expr2,expr2->getValue()) ;
-            fprintf(stderr,"BinaryExpr2 Cast : int to float!\n"); 
-        }
-        if (lefttype->isInt() && righttype->isFloat()){
-            this->expr1=new IntToFloat(expr1,expr1->getValue()) ;
-            fprintf(stderr,"BinaryExpr1 Cast : int to float!\n"); 
-        }
-    }*/
-    
     
 }

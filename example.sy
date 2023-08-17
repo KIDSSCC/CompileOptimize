@@ -1,8 +1,13 @@
-int main()
-{
-  starttime();
-  int a=5;
-  putint(a);
-  stoptime();
+int k;
+
+float params_f40(float x0
+                 ) {
+  if (x0 != 0) {
+    return 5;
+  } else {
+    return 10;
+  }
+}
+int main() {
   return 0;
 }
