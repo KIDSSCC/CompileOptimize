@@ -228,6 +228,7 @@ void LinearScan::genSpillCode()
         std::set<MachineOperand *>::iterator use;
         for(use=interval->uses.begin();use!=interval->uses.end();use++)
         {
+            /*
             MachineOperand* dst=new MachineOperand(*(*use));
             MachineInstruction* new_inst;
             //可以添加范围的判断
@@ -244,11 +245,39 @@ void LinearScan::genSpillCode()
                 new_inst=new LoadMInstruction(LoadMInstruction::LDR,(*use)->getParent()->getParent(), dst,fp, src);
             }
             (*use)->getParent()->insertBefore(new_inst);
+            */
+
+           
+           {
+                MachineOperand* dst=new MachineOperand(*(*use));
+                MachineInstruction* new_inst;
+                MachineOperand *interval_reg=new MachineOperand(MachineOperand::VREG,SymbolTable::getLabel());
+                if(interval->disp>256||interval->disp<-256)
+                {   
+                    MachineOperand *off_reg = new MachineOperand(MachineOperand::VREG,SymbolTable::getLabel());
+                    new_inst=new LoadMInstruction(LoadMInstruction::LDR,(*use)->getParent()->getParent(),off_reg,off);
+                    (*use)->getParent()->insertBefore(new_inst);
+                    new_inst=new BinaryMInstruction((*use)->getParent()->getParent(),BinaryMInstruction::ADD,interval_reg,fp,off_reg);
+                    (*use)->getParent()->insertBefore(new_inst);
+                }
+                else
+                {
+                    new_inst=new BinaryMInstruction((*use)->getParent()->getParent(),BinaryMInstruction::ADD,interval_reg,fp,off);
+                    (*use)->getParent()->insertBefore(new_inst);
+                }
+                auto src=new MachineOperand(*interval_reg);
+                if((*use)->ifFloat())
+                    new_inst=new LoadMInstruction(LoadMInstruction::VLDR,(*use)->getParent()->getParent(), dst,src);
+                else
+                    new_inst=new LoadMInstruction(LoadMInstruction::LDR,(*use)->getParent()->getParent(), dst,src);
+                (*use)->getParent()->insertBefore(new_inst);
+           }
         }
         //对def列表中的操作数插入store指令
         std::set<MachineOperand *>::iterator def;
         for(def=interval->defs.begin();def!=interval->defs.end();def++)
         {
+            /*
             MachineOperand* dst=new MachineOperand(*(*def));
             MachineInstruction* new_inst_load;
             MachineInstruction* new_inst_store;
@@ -261,6 +290,34 @@ void LinearScan::genSpillCode()
             else
                 new_inst_store =new StoreMInstruction(StoreMInstruction::STR,(*def)->getParent()->getParent(), dst,fp, src);
             new_inst_load->insertAfter(new_inst_store);
+            */
+           
+           {
+                MachineOperand* dst=new MachineOperand(*(*def));
+                MachineOperand* interval_reg=new MachineOperand(MachineOperand::VREG,SymbolTable::getLabel());
+                MachineInstruction* new_inst_add;
+                MachineInstruction* new_inst_store;
+                if(interval->disp>256||interval->disp<-256)
+                {
+                    MachineOperand *off_reg = new MachineOperand(MachineOperand::VREG,SymbolTable::getLabel());
+                    auto new_load_inst=new LoadMInstruction(LoadMInstruction::LDR,(*def)->getParent()->getParent(),off_reg,off);
+                    (*def)->getParent()->insertAfter(new_load_inst);
+                    new_inst_add=new BinaryMInstruction((*def)->getParent()->getParent(),BinaryMInstruction::ADD,interval_reg,fp,off_reg);
+                    new_load_inst->insertAfter(new_inst_add);
+                }
+                else
+                {
+                    new_inst_add=new BinaryMInstruction((*def)->getParent()->getParent(),BinaryMInstruction::ADD,interval_reg,fp,off);
+                    (*def)->getParent()->insertAfter(new_inst_add);
+                }
+                auto src=new MachineOperand(*interval_reg);
+                if((*def)->ifFloat())
+                    new_inst_store =new StoreMInstruction(StoreMInstruction::VSTR,(*def)->getParent()->getParent(), dst,src);
+                else
+                    new_inst_store =new StoreMInstruction(StoreMInstruction::STR,(*def)->getParent()->getParent(), dst,src);
+                new_inst_add->insertAfter(new_inst_store);
+           }
+           
         }
     }
 }
