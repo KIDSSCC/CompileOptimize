@@ -545,9 +545,9 @@ void LoadInstruction::genMachineCode(AsmBuilder* builder)
     if(operands[1]->getEntry()->isVariable()&& dynamic_cast<IdentifierSymbolEntry*>(operands[1]->getEntry())->isGlobal())
     {
         /*
-        dst是对应中间代码加载结果的操作数的汇编代码操作数
+        
+        internal_reg2是internal_reg1的一个深拷贝dst是对应中间代码加载结果的操作数的汇编代码操作数
         internal_reg1在这里只是获得了一个临时的汇编代码操作数（虚拟寄存器）
-        internal_reg2是internal_reg1的一个深拷贝
         二者代表同一个虚拟寄存器
         src在这里对应了加载源的汇编代码操作数
         */
@@ -570,19 +570,28 @@ void LoadInstruction::genMachineCode(AsmBuilder* builder)
     {
 
         auto dst=genMachineOperand(operands[0]);
-        auto src1 = genMachineReg(11);
-        auto src2 = genMachineImm(dynamic_cast<TemporarySymbolEntry*>(operands[1]->getEntry())->getOffset());
+        auto fp = genMachineReg(11);
         int off=dynamic_cast<TemporarySymbolEntry*>(operands[1]->getEntry())->getOffset();
+        auto src2 = genMachineImm(off);
         if (off > 255 || off < -255) 
         {
             auto operand = genMachineVReg();
-            cur_block->InsertInst((new LoadMInstruction(LoadMInstruction::LDR,cur_block, operand, src2)));
-            src2 = operand;
+            auto off_reg = genMachineVReg();
+            cur_block->InsertInst(new LoadMInstruction(LoadMInstruction::LDR,cur_block, operand, src2));
+            cur_block->InsertInst(new BinaryMInstruction(cur_block,BinaryMInstruction::ADD,off_reg,fp,operand));
+            //src2 = operand;
+            if(operands[0]->getEntry()->getType()->isFloat())
+                cur_inst = new LoadMInstruction(LoadMInstruction::VLDR,cur_block, dst, off_reg);
+            else
+                cur_inst = new LoadMInstruction(LoadMInstruction::LDR,cur_block, dst, off_reg);
         }
-        if(operands[0]->getEntry()->getType()->isFloat())
-            cur_inst = new LoadMInstruction(LoadMInstruction::VLDR,cur_block, dst, src1, src2);
         else
-            cur_inst = new LoadMInstruction(LoadMInstruction::LDR,cur_block, dst, src1, src2);
+        {
+            if(operands[0]->getEntry()->getType()->isFloat())
+                cur_inst = new LoadMInstruction(LoadMInstruction::VLDR,cur_block, dst, fp, src2);
+            else
+                cur_inst = new LoadMInstruction(LoadMInstruction::LDR,cur_block, dst, fp, src2);
+        }
         cur_block->InsertInst(cur_inst);
     }
     // Load operand from temporary variable
