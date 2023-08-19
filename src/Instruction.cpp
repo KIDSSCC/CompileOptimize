@@ -1117,14 +1117,21 @@ void FuncCallInstruction::genMachineCode(AsmBuilder* builder)
     for(int i=1;i<(int)operands.size();i++)
     {
         if(operands[i]->getEntry()->getType()->isFloat())
+        {
             floatParamCnt++;
+        }
         else
+        {
             intParamCnt++;
+        }
     }
     //先遍历一遍，主要是确定浮点参数的个数,以此确定是否需要对齐，启用s4寄存器。
     bool whetherAlign=false;
-    if(floatParamCnt>4&&floatParamCnt%2==1)
+    int int_to_stack=std::max(0,intParamCnt-4);
+    int float_to_stack=std::max(0,floatParamCnt-4);
+    if(float_to_stack>0&&(int_to_stack+float_to_stack)%2==1)
         whetherAlign=true;
+    //if(floatParamCnt>4&&floatParamCnt%2==1)
     for(int i=1;i<(int)operands.size();i++)
     {
         if(operands[i]->getEntry()->getType()->isFloat())

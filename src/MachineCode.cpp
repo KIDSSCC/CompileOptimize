@@ -559,7 +559,7 @@ void MachineBlock::output()
     int floatparamCnt=dynamic_cast<FunctionType*>(parent->getSym_ptr()->getType())->getFloatparamCount();
     int firstforint = 0;
     int firstforfloat = 1;
-    if(floatparamCnt>4&&floatparamCnt%2==1)
+    if(floatparamCnt>4&&(floatparamCnt+intparamCnt)%2==1)
         firstforfloat=0;
     int inst_cnt=0;
     if(inst_list.size()!=0)

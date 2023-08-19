@@ -1,13 +1,6 @@
-int k;
-
-float params_f40(float x0
-                 ) {
-  if (x0 != 0) {
-    return 5;
-  } else {
-    return 10;
-  }
-}
-int main() {
+int main()
+{
+  float a=0;
+  putfloat(a);
   return 0;
 }
