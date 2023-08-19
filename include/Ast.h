@@ -284,6 +284,12 @@ class Initlist : public ExprNode {
                 this->AddExp(new Constant(new ConstantSymbolEntry(type, 0)));
             return;
         }
+        else if(type->isFloat())
+        {
+            while (!ifFull())
+                this->AddExp(new Constant(new ConstantSymbolEntry(type, 0)));
+            return;
+        }
     };
 };
 

@@ -1,6 +1,11 @@
 int main()
 {
-  float a=0;
-  putfloat(a);
+  float a[3]={1.5};
+  putfloat(a[0]);
+  putch(10);
+  putfloat(a[1]);
+  putch(10);
+  putfloat(a[2]);
+  putch(10);
   return 0;
 }

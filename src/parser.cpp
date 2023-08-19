@@ -620,9 +620,9 @@ static const yytype_int16 yyrline[] =
      300,   301,   305,   309,   313,   319,   320,   324,   330,   331,
      338,   339,   346,   349,   353,   357,   362,   363,   366,   369,
      373,   376,   396,   396,   441,   515,   578,   578,   629,   632,
-     637,   640,   646,   649,   653,   656,   674,   694,   729,   729,
-     779,   846,   913,   913,   974,   977,   983,   990,   983,  1037,
-    1041,  1044,  1047,  1064,  1123,  1126,  1132,  1165,  1169,  1170
+     637,   640,   646,   649,   653,   656,   674,   694,   730,   730,
+     787,   854,   921,   921,   982,   985,   991,   998,   991,  1045,
+    1049,  1052,  1055,  1072,  1131,  1134,  1140,  1173,  1177,  1178
 };
 #endif
 
@@ -2298,6 +2298,7 @@ yyreduce:
             nums.push_back(eachdimension->getValue());
             eachdimension = (ExprNode*)(eachdimension->getNext());
         }
+        
         Type *type;
         Type* temp1;
         if(tempType=="INT")
@@ -2325,11 +2326,11 @@ yyreduce:
         delete [](yyvsp[-1].strtype);
 
     }
-#line 2329 "src/parser.cpp"
+#line 2330 "src/parser.cpp"
     break;
 
   case 88: /* @5: %empty  */
-#line 729 "src/parser.y"
+#line 730 "src/parser.y"
                            {
         std::vector<int> nums;
         ExprNode* eachdimension = (yyvsp[-1].exprtype);
@@ -2359,15 +2360,20 @@ yyreduce:
         SymbolEntry* se = new IdentifierSymbolEntry(arraytype, (yyvsp[-2].strtype), identifiers->getLevel());
         (yyval.se) = se;
         int len_of_array=arraytype->getArraySize()/32;
-        if(tempType=="INT")  equalintarray =new int[len_of_array];
-        if(tempType=="FLOAT") equalfloatarray =new float[len_of_array];
-        
+        if(tempType=="INT")
+        {
+            equalintarray =new int[len_of_array];
+        }
+        if(tempType=="FLOAT")
+        {
+            equalfloatarray =new float[len_of_array];
+        }
     }
-#line 2367 "src/parser.cpp"
+#line 2373 "src/parser.cpp"
     break;
 
   case 89: /* VarDef: ID ArrayIndex ASSIGN @5 VarInitVal  */
-#line 762 "src/parser.y"
+#line 768 "src/parser.y"
                 { 
         if(tempType=="INT")
         {
@@ -2378,16 +2384,18 @@ yyreduce:
             ((IdentifierSymbolEntry*)(yyvsp[-1].se))->setFloatArrayValue(equalfloatarray);  
         }  
         if(((Initlist*)(yyvsp[0].exprtype))->ifempty())
+        {
             ((IdentifierSymbolEntry*)(yyvsp[-1].se))->setquan0();
+        }
         identifiers->install((yyvsp[-4].strtype), (yyvsp[-1].se));
         (yyval.stmttype) = new DeclStmt(new Id((yyvsp[-1].se),(yyvsp[-3].exprtype)), (yyvsp[0].exprtype));
         delete [](yyvsp[-4].strtype);
     }
-#line 2387 "src/parser.cpp"
+#line 2395 "src/parser.cpp"
     break;
 
   case 90: /* VarInitVal: Exp  */
-#line 779 "src/parser.y"
+#line 787 "src/parser.y"
           {  
         (yyval.exprtype) = (yyvsp[0].exprtype);
         //initstack栈不为空，说明当前是一个数组
@@ -2455,11 +2463,11 @@ yyreduce:
             } 
         }       
     }
-#line 2459 "src/parser.cpp"
+#line 2467 "src/parser.cpp"
     break;
 
   case 91: /* VarInitVal: LBRACE RBRACE  */
-#line 846 "src/parser.y"
+#line 854 "src/parser.y"
                     {
         if(tempType=="INT")
         { 
@@ -2527,11 +2535,11 @@ yyreduce:
         }
         
     }
-#line 2531 "src/parser.cpp"
+#line 2539 "src/parser.cpp"
     break;
 
   case 92: /* @6: %empty  */
-#line 913 "src/parser.y"
+#line 921 "src/parser.y"
              {
         bracenum++;
         SymbolEntry* se;
@@ -2549,11 +2557,11 @@ yyreduce:
         (yyval.exprtype) = expr;
         
     }
-#line 2553 "src/parser.cpp"
+#line 2561 "src/parser.cpp"
     break;
 
   case 93: /* VarInitVal: LBRACE @6 VarInitValList RBRACE  */
-#line 930 "src/parser.y"
+#line 938 "src/parser.y"
                             {
         bracenum--;
         while(initstack.top() != (yyvsp[-2].exprtype) && initstack.size() > (long unsigned int)(bracenum + 1))
@@ -2594,38 +2602,38 @@ yyreduce:
         }
         
     }
-#line 2598 "src/parser.cpp"
-    break;
-
-  case 94: /* VarInitValList: VarInitVal  */
-#line 974 "src/parser.y"
-                 {
-        (yyval.exprtype) = (yyvsp[0].exprtype);
-    }
 #line 2606 "src/parser.cpp"
     break;
 
-  case 95: /* VarInitValList: VarInitValList COMM VarInitVal  */
-#line 977 "src/parser.y"
-                                     {
-        (yyval.exprtype) = (yyvsp[-2].exprtype);
+  case 94: /* VarInitValList: VarInitVal  */
+#line 982 "src/parser.y"
+                 {
+        (yyval.exprtype) = (yyvsp[0].exprtype);
     }
 #line 2614 "src/parser.cpp"
     break;
 
+  case 95: /* VarInitValList: VarInitValList COMM VarInitVal  */
+#line 985 "src/parser.y"
+                                     {
+        (yyval.exprtype) = (yyvsp[-2].exprtype);
+    }
+#line 2622 "src/parser.cpp"
+    break;
+
   case 96: /* $@7: %empty  */
-#line 983 "src/parser.y"
+#line 991 "src/parser.y"
              {
         identifiers = new SymbolTable(identifiers);
         intParam_num_for_func=0;
         floatParam_num_for_func=0;
         functionhasRet=false;
     }
-#line 2625 "src/parser.cpp"
+#line 2633 "src/parser.cpp"
     break;
 
   case 97: /* $@8: %empty  */
-#line 990 "src/parser.y"
+#line 998 "src/parser.y"
     {
         FunctionType* functype=new FunctionType((yyvsp[-5].type),{}); 
         if((yyvsp[-1].stmttype))
@@ -2652,11 +2660,11 @@ yyreduce:
             exit(EXIT_FAILURE);
         }    
     }
-#line 2656 "src/parser.cpp"
+#line 2664 "src/parser.cpp"
     break;
 
   case 98: /* FuncDef: Type ID $@7 LPAREN FuncParams RPAREN $@8 BlockStmt  */
-#line 1017 "src/parser.y"
+#line 1025 "src/parser.y"
     {
         SymbolEntry *se;
         se = identifiers->lookup((yyvsp[-6].strtype));
@@ -2674,34 +2682,34 @@ yyreduce:
         delete top;
         delete [](yyvsp[-6].strtype);
     }
-#line 2678 "src/parser.cpp"
+#line 2686 "src/parser.cpp"
     break;
 
   case 99: /* FuncParams: FuncParams COMM FuncParam  */
-#line 1037 "src/parser.y"
+#line 1045 "src/parser.y"
                                 {
         (yyval.stmttype) = (yyvsp[-2].stmttype);
         (yyvsp[-2].stmttype)->setNext((yyvsp[0].stmttype));        //设置参数的next
     }
-#line 2687 "src/parser.cpp"
-    break;
-
-  case 100: /* FuncParams: FuncParam  */
-#line 1041 "src/parser.y"
-                {
-        (yyval.stmttype) = (yyvsp[0].stmttype);
-    }
 #line 2695 "src/parser.cpp"
     break;
 
+  case 100: /* FuncParams: FuncParam  */
+#line 1049 "src/parser.y"
+                {
+        (yyval.stmttype) = (yyvsp[0].stmttype);
+    }
+#line 2703 "src/parser.cpp"
+    break;
+
   case 101: /* FuncParams: %empty  */
-#line 1044 "src/parser.y"
+#line 1052 "src/parser.y"
              { (yyval.stmttype)=nullptr;}
-#line 2701 "src/parser.cpp"
+#line 2709 "src/parser.cpp"
     break;
 
   case 102: /* FuncParam: Type ID  */
-#line 1047 "src/parser.y"
+#line 1055 "src/parser.y"
               {
         SymbolEntry *se;
         if(tempType=="INT")
@@ -2719,11 +2727,11 @@ yyreduce:
         (yyval.stmttype) = new DeclStmt(new Id(se));
         delete [](yyvsp[0].strtype);    
     }
-#line 2723 "src/parser.cpp"
+#line 2731 "src/parser.cpp"
     break;
 
   case 103: /* FuncParam: Type ID FunArrayIndex  */
-#line 1064 "src/parser.y"
+#line 1072 "src/parser.y"
                            {
         if(tempType=="FLOAT")  
         {
@@ -2781,28 +2789,28 @@ yyreduce:
         }
         
     }
-#line 2785 "src/parser.cpp"
-    break;
-
-  case 104: /* FunArrayIndex: LBRACK RBRACK  */
-#line 1123 "src/parser.y"
-                    {
-        (yyval.exprtype) = new ExprNode(nullptr);
-    }
 #line 2793 "src/parser.cpp"
     break;
 
+  case 104: /* FunArrayIndex: LBRACK RBRACK  */
+#line 1131 "src/parser.y"
+                    {
+        (yyval.exprtype) = new ExprNode(nullptr);
+    }
+#line 2801 "src/parser.cpp"
+    break;
+
   case 105: /* FunArrayIndex: FunArrayIndex LBRACK Exp RBRACK  */
-#line 1126 "src/parser.y"
+#line 1134 "src/parser.y"
                                        {
         (yyval.exprtype) = (yyvsp[-3].exprtype);
         (yyval.exprtype)->setNext((yyvsp[-1].exprtype));
     }
-#line 2802 "src/parser.cpp"
+#line 2810 "src/parser.cpp"
     break;
 
   case 106: /* FuncCall: ID LPAREN ParaList RPAREN  */
-#line 1132 "src/parser.y"
+#line 1140 "src/parser.y"
                                 {
         //判断是不是时间相关函数
         string start_prefix=string((yyvsp[-3].strtype)).substr(0,15);
@@ -2834,32 +2842,32 @@ yyreduce:
             (yyval.exprtype)=new FunctionCall(se,(yyvsp[-1].exprtype));
         }
     }
-#line 2838 "src/parser.cpp"
+#line 2846 "src/parser.cpp"
     break;
 
   case 107: /* ParaList: ParaList COMM Exp  */
-#line 1165 "src/parser.y"
+#line 1173 "src/parser.y"
                         {
         (yyval.exprtype) = (yyvsp[-2].exprtype);
         (yyvsp[-2].exprtype)->setNext((yyvsp[0].exprtype));        //设置next
     }
-#line 2847 "src/parser.cpp"
+#line 2855 "src/parser.cpp"
     break;
 
   case 108: /* ParaList: Exp  */
-#line 1169 "src/parser.y"
+#line 1177 "src/parser.y"
           { (yyval.exprtype)=(yyvsp[0].exprtype);}
-#line 2853 "src/parser.cpp"
+#line 2861 "src/parser.cpp"
     break;
 
   case 109: /* ParaList: %empty  */
-#line 1170 "src/parser.y"
+#line 1178 "src/parser.y"
              { (yyval.exprtype)=nullptr;}
-#line 2859 "src/parser.cpp"
+#line 2867 "src/parser.cpp"
     break;
 
 
-#line 2863 "src/parser.cpp"
+#line 2871 "src/parser.cpp"
 
       default: break;
     }
@@ -3052,7 +3060,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 1173 "src/parser.y"
+#line 1181 "src/parser.y"
 
 
 int yyerror(char const* message)

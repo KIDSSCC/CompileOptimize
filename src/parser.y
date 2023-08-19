@@ -699,6 +699,7 @@ VarDef
             nums.push_back(eachdimension->getValue());
             eachdimension = (ExprNode*)(eachdimension->getNext());
         }
+        
         Type *type;
         Type* temp1;
         if(tempType=="INT")
@@ -755,9 +756,14 @@ VarDef
         SymbolEntry* se = new IdentifierSymbolEntry(arraytype, $1, identifiers->getLevel());
         $<se>$ = se;
         int len_of_array=arraytype->getArraySize()/32;
-        if(tempType=="INT")  equalintarray =new int[len_of_array];
-        if(tempType=="FLOAT") equalfloatarray =new float[len_of_array];
-        
+        if(tempType=="INT")
+        {
+            equalintarray =new int[len_of_array];
+        }
+        if(tempType=="FLOAT")
+        {
+            equalfloatarray =new float[len_of_array];
+        }
     }
       VarInitVal{ 
         if(tempType=="INT")
@@ -769,7 +775,9 @@ VarDef
             ((IdentifierSymbolEntry*)$<se>4)->setFloatArrayValue(equalfloatarray);  
         }  
         if(((Initlist*)$5)->ifempty())
+        {
             ((IdentifierSymbolEntry*)$<se>4)->setquan0();
+        }
         identifiers->install($1, $<se>4);
         $$ = new DeclStmt(new Id($<se>4,$2), $5);
         delete []$1;
