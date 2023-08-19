@@ -545,9 +545,9 @@ void LoadInstruction::genMachineCode(AsmBuilder* builder)
     if(operands[1]->getEntry()->isVariable()&& dynamic_cast<IdentifierSymbolEntry*>(operands[1]->getEntry())->isGlobal())
     {
         /*
-        dst是对应中间代码加载结果的操作数的汇编代码操作数
+        
+        internal_reg2是internal_reg1的一个深拷贝dst是对应中间代码加载结果的操作数的汇编代码操作数
         internal_reg1在这里只是获得了一个临时的汇编代码操作数（虚拟寄存器）
-        internal_reg2是internal_reg1的一个深拷贝
         二者代表同一个虚拟寄存器
         src在这里对应了加载源的汇编代码操作数
         */
@@ -570,19 +570,28 @@ void LoadInstruction::genMachineCode(AsmBuilder* builder)
     {
 
         auto dst=genMachineOperand(operands[0]);
-        auto src1 = genMachineReg(11);
-        auto src2 = genMachineImm(dynamic_cast<TemporarySymbolEntry*>(operands[1]->getEntry())->getOffset());
+        auto fp = genMachineReg(11);
         int off=dynamic_cast<TemporarySymbolEntry*>(operands[1]->getEntry())->getOffset();
+        auto src2 = genMachineImm(off);
         if (off > 255 || off < -255) 
         {
             auto operand = genMachineVReg();
-            cur_block->InsertInst((new LoadMInstruction(LoadMInstruction::LDR,cur_block, operand, src2)));
-            src2 = operand;
+            auto off_reg = genMachineVReg();
+            cur_block->InsertInst(new LoadMInstruction(LoadMInstruction::LDR,cur_block, operand, src2));
+            cur_block->InsertInst(new BinaryMInstruction(cur_block,BinaryMInstruction::ADD,off_reg,fp,operand));
+            //src2 = operand;
+            if(operands[0]->getEntry()->getType()->isFloat())
+                cur_inst = new LoadMInstruction(LoadMInstruction::VLDR,cur_block, dst, off_reg);
+            else
+                cur_inst = new LoadMInstruction(LoadMInstruction::LDR,cur_block, dst, off_reg);
         }
-        if(operands[0]->getEntry()->getType()->isFloat())
-            cur_inst = new LoadMInstruction(LoadMInstruction::VLDR,cur_block, dst, src1, src2);
         else
-            cur_inst = new LoadMInstruction(LoadMInstruction::LDR,cur_block, dst, src1, src2);
+        {
+            if(operands[0]->getEntry()->getType()->isFloat())
+                cur_inst = new LoadMInstruction(LoadMInstruction::VLDR,cur_block, dst, fp, src2);
+            else
+                cur_inst = new LoadMInstruction(LoadMInstruction::LDR,cur_block, dst, fp, src2);
+        }
         cur_block->InsertInst(cur_inst);
     }
     // Load operand from temporary variable
@@ -793,7 +802,7 @@ void CmpInstruction::genMachineCode(AsmBuilder* builder)
     // TODO
     auto cur_block = builder->getBlock();
     MachineInstruction* cur_inst=nullptr;
-    MachineOperand*src1,*src2;
+    MachineOperand*src1,*src2; 
     src1=genMachineOperand(operands[1]);
     src2=genMachineOperand(operands[2]);
     if (src1->isImm())
@@ -839,16 +848,22 @@ void CmpInstruction::genMachineCode(AsmBuilder* builder)
             src2 = new MachineOperand(*internal_reg);
         }
     }
+    //默认已经完成了类型转换，此时这两个操作数的类型是相同的，判断谁都可以
     if(operands[1]->getType()->isFloat())
     {
-        //默认已经完成了类型转换，此时这两个操作数的类型是相同的，判断谁都可以
         cur_inst = new CmpMInstruction(CmpMInstruction::VCMP,cur_block, src1, src2, opcode);
     }
     else
+    {
         cur_inst = new CmpMInstruction(CmpMInstruction::CMP,cur_block, src1, src2, opcode);//debug!!enum的数值要对应上！！顺序一致才可！！
+    }
     cur_block->InsertInst(cur_inst);
     
-    if (opcode >= L && opcode <= LE) //debug:GE改LE
+
+
+
+
+    if (opcode >= E && opcode <= LE) //debug:GE改LE
     {
         //对于L，LE，G，GE，创建分支
         auto dst = genMachineOperand(operands[0]);
@@ -873,6 +888,12 @@ void CmpInstruction::genMachineCode(AsmBuilder* builder)
                 break;
             case GE:
                 cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, dst,falseOperand, L);
+                break;
+            case E:
+                cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, dst,falseOperand, NE);
+                break;
+            case NE:
+                cur_inst = new MovMInstruction(cur_block, MovMInstruction::MOV, dst,falseOperand, E);
                 break;
 
         }
@@ -1096,14 +1117,21 @@ void FuncCallInstruction::genMachineCode(AsmBuilder* builder)
     for(int i=1;i<(int)operands.size();i++)
     {
         if(operands[i]->getEntry()->getType()->isFloat())
+        {
             floatParamCnt++;
+        }
         else
+        {
             intParamCnt++;
+        }
     }
     //先遍历一遍，主要是确定浮点参数的个数,以此确定是否需要对齐，启用s4寄存器。
     bool whetherAlign=false;
-    if(floatParamCnt>4&&floatParamCnt%2==1)
+    int int_to_stack=std::max(0,intParamCnt-4);
+    int float_to_stack=std::max(0,floatParamCnt-4);
+    if(float_to_stack>0&&(int_to_stack+float_to_stack)%2==1)
         whetherAlign=true;
+    //if(floatParamCnt>4&&floatParamCnt%2==1)
     for(int i=1;i<(int)operands.size();i++)
     {
         if(operands[i]->getEntry()->getType()->isFloat())

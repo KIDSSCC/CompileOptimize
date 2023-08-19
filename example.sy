@@ -1,8 +1,11 @@
 int main()
 {
-  starttime();
-  int a=5;
-  putint(a);
-  stoptime();
+  float a[3]={1.5};
+  putfloat(a[0]);
+  putch(10);
+  putfloat(a[1]);
+  putch(10);
+  putfloat(a[2]);
+  putch(10);
   return 0;
 }
