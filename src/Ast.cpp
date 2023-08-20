@@ -617,7 +617,8 @@ void IfStmt::genCode()
 
     thenStmt->genCode();
     then_bb = builder->getInsertBB();
-    new UncondBrInstruction(end_bb, then_bb);
+    if(!then_bb->rbegin()->isRet())
+        new UncondBrInstruction(end_bb, then_bb);
 
     builder->setInsertBB(end_bb);
 }
@@ -650,12 +651,14 @@ void IfElseStmt::genCode()
     thenStmt->genCode();
     
     then_bb = builder->getInsertBB();
-    new UncondBrInstruction(end_bb, then_bb);
+    if(!then_bb->rbegin()->isRet())
+        new UncondBrInstruction(end_bb, then_bb);
 
     builder->setInsertBB(else_bb);
     elseStmt->genCode();
     else_bb=builder->getInsertBB();
-    new UncondBrInstruction(end_bb, else_bb);
+    if(!else_bb->rbegin()->isRet())
+        new UncondBrInstruction(end_bb, else_bb);
 
     builder->setInsertBB(end_bb);
 }
@@ -834,7 +837,8 @@ void WhileStmt::genCode()
     builder->setInsertBB(stmt_bb);
     stmt->genCode();
     stmt_bb=builder->getInsertBB();
-    new UncondBrInstruction(condBlock, stmt_bb);
+    if(!stmt_bb->rbegin()->isRet())
+        new UncondBrInstruction(condBlock, stmt_bb);
 
     builder->setInsertBB(endBlock);
 }

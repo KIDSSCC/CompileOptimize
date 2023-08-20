@@ -38,6 +38,19 @@ public:
     
     //operand的toStr函数就是打印symbolentry
     std::string toStr() const;
+
+    bool isGlobal()
+    {
+        if (se->isVariable())
+            return ((IdentifierSymbolEntry*)se)->isGlobal();
+        else
+            return false;
+    }
+    void removeDef(Instruction* inst) {def = nullptr;}
+    double getConstVal()
+    {
+        return ((ConstantSymbolEntry*)se)->getValue();
+    }
 };
 
 #endif

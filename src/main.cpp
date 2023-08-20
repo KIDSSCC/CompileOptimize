@@ -5,6 +5,8 @@
 #include "Unit.h"
 #include "MachineCode.h"
 #include "LinearScan.h"
+#include "Mem2reg.h"
+#include "Global2Local.h"
 using namespace std;
 
 Ast ast;
@@ -83,6 +85,12 @@ int main(int argc, char *argv[])
     //生成中间代码
     ast.genCode(&unit);
     
+    // Mem2reg mem2regPass(&unit);
+    // mem2regPass.pass();
+    Global2Local g2l(&unit);
+    g2l.pass();
+
+
     if(dump_ir)
     {
         unit.output();

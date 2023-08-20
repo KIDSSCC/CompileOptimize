@@ -28,6 +28,9 @@ private:
     BasicBlock *entry;
     //所属的编译单元？
     Unit *parent;
+    
+    std::map<Function*, std::vector<Instruction*>> preds;
+    bool recur;
 
 public:
     //构造函数，需要编译单元和符号表项
@@ -53,6 +56,10 @@ public:
     SymbolEntry *getSymPtr() { return sym_ptr; };
     BasicBlock *getLastBlock() { std::vector<BasicBlock *>::iterator it = block_list.end()-1;return *it; };
     void genMachineCode(AsmBuilder*);
+
+    std::map<Function*, std::vector<Instruction*>>& getPreds() {return preds;};
+    void addPred(Instruction* in);
+    bool hasRecur() { return recur; }
 };
 
 #endif

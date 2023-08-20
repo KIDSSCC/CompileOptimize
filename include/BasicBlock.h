@@ -31,6 +31,7 @@ public:
     void insertFront(Instruction *);
     void insertBack(Instruction *);
     void insertBefore(Instruction *, Instruction *);
+    void insertAfter(Instruction*, Instruction*);
     void remove(Instruction *);
     bool empty() const { return head->getNext() == head;}
     void output() const;

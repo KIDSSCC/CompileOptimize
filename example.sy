@@ -1,11 +1,26 @@
+int sum = 0, n;
+
+
+void printans()
+{
+    sum = sum + 1;
+    putint(sum);
+    putch(10);
+    int i = 1;
+    while (i <= n) {
+        if (i == n) {
+            putch(10);
+            return;
+        }
+        i=i+1;
+    }
+    return;
+}
+
 int main()
 {
-  float a[3]={1.5};
-  putfloat(a[0]);
-  putch(10);
-  putfloat(a[1]);
-  putch(10);
-  putfloat(a[2]);
-  putch(10);
-  return 0;
+    n=5;
+    printans();
+    printans();
+    return sum;
 }

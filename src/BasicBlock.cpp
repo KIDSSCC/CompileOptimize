@@ -33,6 +33,17 @@ void BasicBlock::insertBefore(Instruction *dst, Instruction *src)
     dst->setParent(this);
 }
 
+//dst插入在src的后面
+void BasicBlock::insertAfter(Instruction* dst, Instruction* src) {
+    dst->setNext(src->getNext());
+    src->getNext()->setPrev(dst);
+
+    dst->setPrev(src);
+    src->setNext(dst);
+
+    dst->setParent(this);
+}
+
 // remove the instruction from intruction list.
 void BasicBlock::remove(Instruction *inst)
 {

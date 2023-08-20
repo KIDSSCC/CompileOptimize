@@ -55,6 +55,7 @@ IdentifierSymbolEntry::IdentifierSymbolEntry(Type *type, std::string name, int s
     this->label=-1; 
     this->AsParamNum=AsParamNum;
     addr = nullptr;
+    sysy=false;
 }
 std::string IdentifierSymbolEntry::toStr()
 {

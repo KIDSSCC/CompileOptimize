@@ -14,6 +14,8 @@ Function::Function(Unit *u, SymbolEntry *s)
     entry = new BasicBlock(this);
     sym_ptr = s;
     parent = u;
+    recur = false;
+    ((IdentifierSymbolEntry*)s)->setFunction(this);
 }
 /*
 Function::~Function()
@@ -119,4 +121,14 @@ void Function::genMachineCode(AsmBuilder* builder)
     */
     cur_unit->InsertFunc(cur_func);
 
+}
+
+void Function::addPred(Instruction* in) {
+    auto func = in->getParent()->getParent();
+    if (func == this)
+        recur = true;
+    if (preds.count(func))
+        preds[func].push_back(in);
+    else
+        preds[func] = {in};
 }

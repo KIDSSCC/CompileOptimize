@@ -124,7 +124,7 @@ public:
     std::string toStr();
     Type* getArrayType() const { return artype; };
     int getArrayNum() const {return num;};
-    bool ifArrayConst() const { return ifconst; };
+    bool whetherConst(){ return ifconst; };
     int getArraySize() const {return size;}
 
     //parentType的getset

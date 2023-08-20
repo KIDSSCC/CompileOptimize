@@ -6,6 +6,7 @@
 
 class Type;
 class Operand;
+class Function;
 
 class SymbolEntry
 {
@@ -97,6 +98,8 @@ private:
     //作为函数参数传入时是第几个参数
     int AsParamNum;
 
+    bool sysy;
+    Function* func = nullptr;
 
 public:
     IdentifierSymbolEntry(Type *type, std::string name, int scope,int AsParamNum=-1);
@@ -125,6 +128,10 @@ public:
     void setquan0() { quan0 = true; };
     bool ifquan0() const { return quan0; };
     int getAsParamNum(){return AsParamNum;}
+    bool isSysy() const { return sysy; };
+    void setSysy(){sysy=true;};
+    Function* getFunction() { return func; }
+    void setFunction(Function* func) { this->func = func; }
 };
 
 

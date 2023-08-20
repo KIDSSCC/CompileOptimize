@@ -3,6 +3,7 @@
 #include <iostream>
 #include "Function.h"
 #include "Type.h"
+#include "utils.h"
 extern FILE* yyout;
 
 Instruction::Instruction(unsigned instType, BasicBlock *insert_bb)
@@ -121,6 +122,25 @@ void BinaryInstruction::output() const
     fprintf(yyout, "  %s = %s %s %s, %s\n", s1.c_str(), op.c_str(), type.c_str(), s2.c_str(), s3.c_str());
 }
 
+void BinaryInstruction::replaceUse(Operand* old_operand, Operand* new_operand) {
+    for(int i=1;i<3;i++)
+    {
+        if(operands[i]==old_operand)
+        {
+            operands[i]->removeUse(this);
+            operands[i]=new_operand;
+            new_operand->addUse(this);
+            return ;
+        }
+    }
+}
+
+void BinaryInstruction::replaceDef(Operand* new_operand) {
+    operands[0]->removeDef(this);
+    operands[0] = new_operand;
+    new_operand->setDef(this);
+}
+
 CmpInstruction::CmpInstruction(unsigned opcode, Operand *dst, Operand *src1, Operand *src2, BasicBlock *insert_bb): Instruction(CMP, insert_bb){
     this->opcode = opcode;
     operands.push_back(dst);
@@ -178,6 +198,25 @@ void CmpInstruction::output() const
     else fprintf(yyout, "  %s = icmp %s %s %s, %s\n", s1.c_str(), op.c_str(), type.c_str(), s2.c_str(), s3.c_str());
 }
 
+void CmpInstruction::replaceUse(Operand* old_operand, Operand* new_operand) {
+    for(int i=1;i<3;i++)
+    {
+        if(operands[i]==old_operand)
+        {
+            operands[i]->removeUse(this);
+            operands[i]=new_operand;
+            new_operand->addUse(this);
+            return ;
+        }
+    }
+}
+
+void CmpInstruction::replaceDef(Operand* new_operand) {
+    operands[0]->removeDef(this);
+    operands[0] = new_operand;
+    new_operand->setDef(this);
+}
+
 UncondBrInstruction::UncondBrInstruction(BasicBlock *to, BasicBlock *insert_bb) : Instruction(UNCOND, insert_bb)
 {
     branch = to;
@@ -218,6 +257,14 @@ void CondBrInstruction::output() const
     int true_label = true_branch->getNo();
     int false_label = false_branch->getNo();
     fprintf(yyout, "  br %s %s, label %%B%d, label %%B%d\n", type.c_str(), cond.c_str(), true_label, false_label);
+}
+
+void CondBrInstruction::replaceUse(Operand* old_operand, Operand* new_operand) {
+    if (operands[0] == old_operand) {
+        operands[0]->removeUse(this);
+        operands[0] = new_operand;
+        new_operand->addUse(this);
+    }
 }
 
 void CondBrInstruction::setFalseBranch(BasicBlock *bb)
@@ -273,6 +320,23 @@ void RetInstruction::output() const
     }
 }
 
+void RetInstruction::replaceDef(Operand* new_operand) {
+    if (operands.size()!=0) {
+        operands[0]->removeDef(this);
+        operands[0] = new_operand;
+        new_operand->setDef(this);
+    }
+}
+
+void RetInstruction::replaceUse(Operand* old_operand, Operand* new_operand) {
+    if (operands.size()!=0 && operands[0] == old_operand) {
+        operands[0]->removeUse(this);
+        operands[0] = new_operand;
+        new_operand->addUse(this);
+    }
+}
+
+
 AllocaInstruction::AllocaInstruction(Operand *dst, SymbolEntry *se, BasicBlock *insert_bb) : Instruction(ALLOCA, insert_bb)
 {
     operands.push_back(dst);
@@ -322,6 +386,20 @@ void LoadInstruction::output() const
     fprintf(yyout, "  %s = load %s, %s %s, align 4\n", dst.c_str(), dst_type.c_str(), src_type.c_str(), src.c_str());
 }
 
+void LoadInstruction::replaceUse(Operand* old_operand, Operand* new_operand) {
+    if (operands[1] == old_operand) {
+        operands[1]->removeUse(this);
+        operands[1] = new_operand;
+        new_operand->addUse(this);
+    }
+}
+
+void LoadInstruction::replaceDef(Operand* new_operand) {
+    operands[0]->removeDef(this);
+    operands[0] = new_operand;
+    new_operand->setDef(this);
+}
+
 StoreInstruction::StoreInstruction(Operand *dst_addr, Operand *src, BasicBlock *insert_bb) : Instruction(STORE, insert_bb)
 {
     operands.push_back(dst_addr);
@@ -344,6 +422,19 @@ void StoreInstruction::output() const
     std::string src_type = operands[1]->getType()->toStr();
 
     fprintf(yyout, "  store %s %s, %s %s, align 4\n", src_type.c_str(), src.c_str(), dst_type.c_str(), dst.c_str());
+}
+
+void StoreInstruction::replaceUse(Operand* old_operand, Operand* new_operand) {
+    for(int i=0;i<2;i++)
+    {
+        if(operands[i]==old_operand)
+        {
+            operands[i]->removeUse(this);
+            operands[i]=new_operand;
+            new_operand->addUse(this);
+            return ;
+        }
+    }
 }
 
 //通过declstmt节点过来，收到三个主要参数，一个指针类型的临时节点，数组基地址（大概），和一个常数0
@@ -387,6 +478,27 @@ GepInstruction::~GepInstruction() {
     operands[1]->removeUse(this);
     operands[2]->removeUse(this);
 }
+
+void GepInstruction::replaceDef(Operand* new_operand) {
+    operands[0]->removeDef(this);
+    operands[0] = new_operand;
+    new_operand->setDef(this);
+}
+
+void GepInstruction::replaceUse(Operand* old_operand, Operand* new_operand) {
+    for(int i=1;i<3;i++)
+    {
+        if(operands[i]==old_operand)
+        {
+            operands[i]->removeUse(this);
+            operands[i]=new_operand;
+            new_operand->addUse(this);
+            return ;
+        }
+    }
+}
+
+
 MachineOperand* Instruction::genMachineOperand(Operand* operand)
 {
     /*
@@ -545,7 +657,6 @@ void LoadInstruction::genMachineCode(AsmBuilder* builder)
     if(operands[1]->getEntry()->isVariable()&& dynamic_cast<IdentifierSymbolEntry*>(operands[1]->getEntry())->isGlobal())
     {
         /*
-        
         internal_reg2是internal_reg1的一个深拷贝dst是对应中间代码加载结果的操作数的汇编代码操作数
         internal_reg1在这里只是获得了一个临时的汇编代码操作数（虚拟寄存器）
         二者代表同一个虚拟寄存器
@@ -998,6 +1109,21 @@ void XorInstruction::output()const
     fprintf(yyout, "  %s = xor %s %s, true\n", dst->toStr().c_str(),src->getType()->toStr().c_str(), src->toStr().c_str());
 }
 
+void XorInstruction::replaceDef(Operand* new_operand) {
+    operands[0]->removeDef(this);
+    operands[0] = new_operand;
+    new_operand->setDef(this);
+}
+
+void XorInstruction::replaceUse(Operand* old_operand, Operand* new_operand) {
+    if (operands[1] == old_operand) {
+        operands[1]->removeUse(this);
+        operands[1] = new_operand;
+        new_operand->addUse(this);
+    }
+}
+
+
 FuncCallInstruction::FuncCallInstruction(Operand* dst,SymbolEntry* func,std::vector<Operand*> params,BasicBlock* insert_bb = nullptr):Instruction(FUNCCALL,insert_bb)
 {
     this->dst=dst;//新加属性
@@ -1007,12 +1133,15 @@ FuncCallInstruction::FuncCallInstruction(Operand* dst,SymbolEntry* func,std::vec
     {
         dst->setDef(this);
     }
-
-    
     for(int i=0;i<(int)params.size();i++)
     {
         operands.push_back(params[i]);
         params[i]->addUse(this);
+    }
+    auto func_entry=dynamic_cast<IdentifierSymbolEntry*>(func);
+    if(!isSysy(func_entry->getName()))
+    {
+        func_entry->getFunction()->addPred(this);
     }
 }
 
@@ -1035,6 +1164,25 @@ void FuncCallInstruction::output() const
     fprintf(yyout, ")\n");
 }
 
+void FuncCallInstruction::replaceDef(Operand* new_operand) {
+    if (dst) {
+        operands[0]->removeDef(this);
+        operands[0] = new_operand;
+        new_operand->setDef(this);
+        dst = new_operand;
+    }
+}
+
+void FuncCallInstruction::replaceUse(Operand* old_operand, Operand* new_operand) {
+    for (int i = 1; i < (int)operands.size(); i++)
+        if (operands[i] == old_operand) {
+            operands[i]->removeUse(this);
+            operands[i] = new_operand;
+            new_operand->addUse(this);
+        }
+}
+
+
 ZextInstruction::ZextInstruction(Operand*dst,Operand*src,BasicBlock*bb):Instruction(ZEXT,bb)
 {
     operands.push_back(dst);
@@ -1048,6 +1196,20 @@ void ZextInstruction::output() const
     Operand* dst = operands[0];
     Operand* src = operands[1];
     fprintf(yyout, "  %s = zext %s %s to i32\n", dst->toStr().c_str(),src->getType()->toStr().c_str(), src->toStr().c_str());
+}
+
+void ZextInstruction::replaceDef(Operand* new_operand) {
+    operands[0]->removeDef(this);
+    operands[0] = new_operand;
+    new_operand->setDef(this);
+}
+
+void ZextInstruction::replaceUse(Operand* old_operand, Operand* new_operand) {
+    if (operands[1] == old_operand) {
+        operands[1]->removeUse(this);
+        operands[1] = new_operand;
+        new_operand->addUse(this);
+    }
 }
 
 I2FInstruction::I2FInstruction(Operand* dst,Operand* src,BasicBlock* insert_bb): Instruction(I2F, insert_bb), dst(dst), src(src) {
@@ -1087,6 +1249,40 @@ void F2IInstruction::output() const {
     fprintf(yyout, "  %s = fptosi %s %s to %s\n", dst->toStr().c_str(),
             src->getType()->toStr().c_str(), src->toStr().c_str(),
             dst->getType()->toStr().c_str());
+}
+
+void I2FInstruction::replaceDef(Operand* new_operand)
+{
+    operands[0]->removeDef(this);
+    operands[0] = new_operand;
+    new_operand->setDef(this);
+}
+void F2IInstruction::replaceDef(Operand* new_operand)
+{
+    operands[0]->removeDef(this);
+    operands[0] = new_operand;
+    new_operand->setDef(this);
+}
+
+void I2FInstruction::replaceUse(Operand* old_operand,Operand* new_operand)
+{
+    if (operands[1] == old_operand) 
+    {
+        operands[1]->removeUse(this);
+        operands[1] = new_operand;
+        new_operand->addUse(this);
+        src = new_operand;
+    }
+}
+void F2IInstruction::replaceUse(Operand* old_operand,Operand* new_operand)
+{
+    if (operands[1] == old_operand) 
+    {
+        operands[1]->removeUse(this);
+        operands[1] = new_operand;
+        new_operand->addUse(this);
+        src = new_operand;
+    }
 }
 
 void XorInstruction::genMachineCode(AsmBuilder* builder)

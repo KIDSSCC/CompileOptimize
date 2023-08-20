@@ -32,6 +32,10 @@ public:
     bool isCond() const {return instType == COND;};
     bool isAlloc() const {return instType == ALLOCA;};
     bool isRet() const {return instType==RET;};
+    bool isLoad() const {return instType==LOAD;};
+    bool isStore() const {return instType==STORE;};
+    bool isFuncCall() const {return instType==FUNCCALL;};
+    bool isGep() const {return instType==GEP;};
 
     //设置所属的基本块
     void setParent(BasicBlock *);
@@ -59,6 +63,12 @@ public:
     MachineOperand* genMachineImm(int val);
     MachineOperand* genMachineLabel(int block_no);
     virtual void genMachineCode(AsmBuilder*) = 0;
+
+    //用于全局变量局部化
+    virtual std::vector<Operand*> getUse() { return std::vector<Operand*>(); }
+    virtual Operand* getDef() { return nullptr; }
+    virtual void replaceUse(Operand* old_operand, Operand* new_operand) {}
+    virtual void replaceDef(Operand* new_operand) {}
 protected:
     //指令类型
     unsigned instType;
@@ -102,6 +112,12 @@ public:
     ~LoadInstruction();
     void output() const;
     void genMachineCode(AsmBuilder*);    //lab7新加！！
+
+    //全局变量局部化
+    Operand* getDef() { return operands[0]; }
+    std::vector<Operand*> getUse() {return std::vector<Operand*>({operands[1]});}
+    void replaceUse(Operand* old_operand, Operand* new_operand);
+    void replaceDef(Operand* new_operand);
 };
 
 class StoreInstruction : public Instruction
@@ -111,26 +127,41 @@ public:
     ~StoreInstruction();
     void output() const;
     void genMachineCode(AsmBuilder*);    //lab7新加！！
+
+    //全局变量局部化
+    std::vector<Operand*> getUse() {return std::vector<Operand*>({operands[0], operands[1]});}
+    void replaceUse(Operand* old_operand, Operand* new_operand);
 };
 
 class BinaryInstruction : public Instruction
 {
 public:
+    enum {SUB,ADD,MUL,DIV,MOD,AND, OR};
     BinaryInstruction(unsigned opcode, Operand *dst, Operand *src1, Operand *src2, BasicBlock *insert_bb = nullptr);
     ~BinaryInstruction();
     void output() const;
     void genMachineCode(AsmBuilder*);    //lab7新加！！
-    enum {SUB,ADD,MUL,DIV,MOD,AND, OR};
+
+    
+    Operand* getDef() { return operands[0]; }
+    std::vector<Operand*> getUse() {return std::vector<Operand*>({operands[1], operands[2]});}
+    void replaceUse(Operand* old_operand, Operand* new_operand);
+    void replaceDef(Operand* new_operand);
 };
 
 class CmpInstruction : public Instruction
 {
 public:
+    enum {E, NE, L, GE, G, LE};
     CmpInstruction(unsigned opcode, Operand *dst, Operand *src1, Operand *src2, BasicBlock *insert_bb = nullptr);
     ~CmpInstruction();
     void output() const;
     void genMachineCode(AsmBuilder*);    //lab7新加！！
-    enum {E, NE, L, GE, G, LE};
+
+    Operand* getDef() { return operands[0]; }
+    std::vector<Operand*> getUse() {return std::vector<Operand*>({operands[1], operands[2]});}
+    void replaceUse(Operand* old_operand, Operand* new_operand);
+    void replaceDef(Operand* new_operand);
 };
 
 // unconditional branch
@@ -159,6 +190,9 @@ public:
     void setFalseBranch(BasicBlock*);
     BasicBlock* getFalseBranch();
     void genMachineCode(AsmBuilder*);    //lab7新加！！
+
+    std::vector<Operand*> getUse() {return std::vector<Operand*>({operands[0]});}
+    void replaceUse(Operand* old_operand, Operand* new_operand);
 protected:
     BasicBlock* true_branch;
     BasicBlock* false_branch;
@@ -171,6 +205,16 @@ public:
     ~RetInstruction();
     void output() const;
     void genMachineCode(AsmBuilder*);    //lab7新加！！
+
+    std::vector<Operand*> getUse() 
+    {
+        if (operands.size()!=0)
+            return std::vector<Operand*>({operands[0]});
+        else
+            return std::vector<Operand*>();
+    }
+    void replaceUse(Operand* old_operand, Operand* new_operand);
+    void replaceDef(Operand* new_operand);
 };
 
 class XorInstruction:public Instruction
@@ -179,6 +223,11 @@ public:
     XorInstruction(Operand* ,Operand*,BasicBlock *insert_bb = nullptr );
     void output() const;
     void genMachineCode(AsmBuilder*);    //lab7新加！！
+
+    Operand* getDef() { return operands[0]; }
+    std::vector<Operand*> getUse() {return std::vector<Operand*>({operands[1]});}
+    void replaceUse(Operand* old_operand, Operand* new_operand);
+    void replaceDef(Operand* new_operand);
 };
 
 class FuncCallInstruction:public Instruction
@@ -190,6 +239,18 @@ public:
     FuncCallInstruction(Operand* ,SymbolEntry* ,std::vector<Operand*> ,BasicBlock* );
     void output() const;
     void genMachineCode(AsmBuilder*);    //lab7新加！！
+    SymbolEntry* getFuncEntry(){return func;}
+
+    Operand* getDef() { return operands[0]; }
+    std::vector<Operand*> getUse() 
+    {
+        std::vector<Operand*> vec;
+        for (auto it = operands.begin() + 1; it != operands.end(); it++)
+            vec.push_back(*it);
+        return vec;
+    }
+    void replaceUse(Operand* old_operand, Operand* new_operand);
+    void replaceDef(Operand* new_operand);
 };
 
 class ZextInstruction:public Instruction
@@ -198,6 +259,11 @@ public:
     ZextInstruction(Operand*,Operand*,BasicBlock*);
     void output()const;
     void genMachineCode(AsmBuilder*);    //lab7新加！！
+
+    Operand* getDef() { return operands[0]; }
+    std::vector<Operand*> getUse() {return std::vector<Operand*>({operands[1]});}
+    void replaceUse(Operand* old_operand, Operand* new_operand);
+    void replaceDef(Operand* new_operand);
 };
 
 class GepInstruction : public Instruction {
@@ -221,6 +287,10 @@ class GepInstruction : public Instruction {
     Operand* getInit() const { return init; };
     void setInit(Operand* init) { this->init = init; };
 
+    Operand* getDef() { return operands[0]; }
+    std::vector<Operand*> getUse() {return std::vector<Operand*>({operands[1], operands[2]});}
+    void replaceUse(Operand* old_operand, Operand* new_operand);
+    void replaceDef(Operand* new_operand);
 };
 
 //类型转化指令
@@ -234,6 +304,11 @@ public:
     ~I2FInstruction();
     void output() const;
     void genMachineCode(AsmBuilder*);    //lab7新加！！
+
+    Operand* getDef() { return operands[0]; }
+    std::vector<Operand*> getUse() {return std::vector<Operand*>({operands[1]});}
+    void replaceUse(Operand* old_operand, Operand* new_operand);
+    void replaceDef(Operand* new_operand);
 };
 class F2IInstruction:public Instruction
 {
@@ -245,6 +320,11 @@ public:
     ~F2IInstruction();
     void output() const;
     void genMachineCode(AsmBuilder*);    //lab7新加！！
+
+    Operand* getDef() { return operands[0]; }
+    std::vector<Operand*> getUse() {return std::vector<Operand*>({operands[1]});}
+    void replaceUse(Operand* old_operand, Operand* new_operand);
+    void replaceDef(Operand* new_operand);
 };
 
 #endif
