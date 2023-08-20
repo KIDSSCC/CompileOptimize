@@ -7,6 +7,7 @@
 #include "LinearScan.h"
 #include "Mem2reg.h"
 #include "Global2Local.h"
+#include "Div_Mod.h"
 using namespace std;
 
 Ast ast;
@@ -98,6 +99,9 @@ int main(int argc, char *argv[])
     
     //生成汇编代码
     unit.genMachineCode(&mUnit);
+    Div_Mod d_m(&mUnit);
+    d_m.pass();
+
 
     //寄存器分配
     LinearScan linearScan(&mUnit);

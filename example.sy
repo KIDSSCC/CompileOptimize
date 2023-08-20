@@ -1,26 +1,7 @@
-int sum = 0, n;
-
-
-void printans()
-{
-    sum = sum + 1;
-    putint(sum);
-    putch(10);
-    int i = 1;
-    while (i <= n) {
-        if (i == n) {
-            putch(10);
-            return;
-        }
-        i=i+1;
-    }
-    return;
+int f(int f) {
+  return f * 2;
 }
 
-int main()
-{
-    n=5;
-    printans();
-    printans();
-    return sum;
+int main() {
+  return 0;
 }

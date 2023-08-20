@@ -43,6 +43,7 @@ private:
     int reg_no; // register no
     std::string label; // address label
     bool if_float=false;
+    MachineInstruction* def = nullptr;
 public:
     /*
     立即数，虚拟寄存器，物理寄存器，地址标签
@@ -76,6 +77,8 @@ public:
     void PrintReg(bool if_float);
     void output();
     bool ifFloat(){return if_float;};
+    void setDef(MachineInstruction* inst) { def = inst; };
+    MachineInstruction* getDef() { return def; };
 };
 
 class MachineInstruction
@@ -111,7 +114,7 @@ public:
     no的get&set
     def_list与use_list的get
     */
-    enum instType { BINARY, LOAD, STORE, MOV, BRANCH, CMP, STACK,NEONCMP,NEONVCVT,NEONMOV};//挪这里
+    enum instType { BINARY, LOAD, STORE, MOV, BRANCH, CMP, STACK,NEONCMP,NEONVCVT,NEONMOV,SMULL};//挪这里
     enum condType { EQ, NE, LT, GE , GT, LE, NONE,DEBUG};//这个地方WA debug
     virtual void output() = 0;
     void setNo(int no) {this->no = no;};
@@ -120,12 +123,14 @@ public:
     std::vector<MachineOperand*>& getUse() {return use_list;};
     //以下新加
     MachineBlock* getParent() const {return parent;};
+    void setParent(MachineBlock* block) { this->parent = block; }
 
     void insertBefore(MachineInstruction*);
     void insertAfter(MachineInstruction*);
     int getinstType(){return type;}
     int getop(){return op;}
     void setCond(int cond){this->cond=cond;};
+    int MulOrDivImm();
 };
 
 class BinaryMInstruction : public MachineInstruction
@@ -164,8 +169,8 @@ public:
     /*
     movm指令，暂时存疑
     */
-    enum opType { MOV,VMOV};
-    MovMInstruction(MachineBlock* p, int op, MachineOperand* dst, MachineOperand* src,int cond = MachineInstruction::NONE);
+    enum opType { MOV,VMOV,MOVLSR,MOVASR,MOVLSL};
+    MovMInstruction(MachineBlock* p, int op, MachineOperand* dst, MachineOperand* src,int cond = MachineInstruction::NONE,MachineOperand* num=nullptr);
     void output();
 };
 
@@ -215,6 +220,15 @@ public:
     void output();
 };
 
+//长整数乘法指令
+class SmullMInstruction : public MachineInstruction {
+   public:
+    SmullMInstruction(MachineBlock* p,MachineOperand* dst,MachineOperand* dst1,MachineOperand* src1,MachineOperand* src2,int cond = MachineInstruction::NONE);
+    void output();
+    int latency();
+};
+
+
 class MachineBlock
 {
 private:
@@ -259,6 +273,10 @@ public:
     std::vector<MachineInstruction*>::reverse_iterator rbegin() {return inst_list.rbegin();};
     int getCmpCond() const { return cmpCond; };
     void setCmpCond(int cond) { cmpCond = cond; };
+    //窥孔
+    void insertBefore(MachineInstruction* a, MachineInstruction* b);
+    void removeInst(MachineInstruction* inst);
+
 
 };
 

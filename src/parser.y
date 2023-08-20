@@ -1013,8 +1013,9 @@ FuncDef
             functype->setparamsType(paramType);
             functype->setIntparamCount(intParam_num_for_func);
             functype->setFloatparamCount(floatParam_num_for_func);
-        }   
+        }
         SymbolEntry *se = new IdentifierSymbolEntry(functype, $2, identifiers->getPrev()->getLevel());
+
         if(!identifiers->getPrev()->install2($2, se))
         {
             fprintf(stderr, "func %s is already defined\n", (char*)$2);
@@ -1024,7 +1025,7 @@ FuncDef
     BlockStmt
     {
         SymbolEntry *se;
-        se = identifiers->lookup($2);
+        se = identifiers->getPrev()->lookup($2);
         assert(se != nullptr);
         if(($1==TypeSystem::voidType)&&(!functionhasRet))
         {

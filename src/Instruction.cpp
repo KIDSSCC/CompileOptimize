@@ -657,6 +657,7 @@ void LoadInstruction::genMachineCode(AsmBuilder* builder)
     if(operands[1]->getEntry()->isVariable()&& dynamic_cast<IdentifierSymbolEntry*>(operands[1]->getEntry())->isGlobal())
     {
         /*
+
         internal_reg2是internal_reg1的一个深拷贝dst是对应中间代码加载结果的操作数的汇编代码操作数
         internal_reg1在这里只是获得了一个临时的汇编代码操作数（虚拟寄存器）
         二者代表同一个虚拟寄存器
@@ -1133,6 +1134,8 @@ FuncCallInstruction::FuncCallInstruction(Operand* dst,SymbolEntry* func,std::vec
     {
         dst->setDef(this);
     }
+
+    
     for(int i=0;i<(int)params.size();i++)
     {
         operands.push_back(params[i]);

@@ -173,6 +173,22 @@ void MachineInstruction::insertAfter(MachineInstruction* inst) {
     instructions.insert(++it, inst);
 }
 
+int MachineInstruction::MulOrDivImm()
+{
+    if(type!=BINARY)
+        return 0;
+    if(op==BinaryMInstruction::DIV)
+    {
+        if(use_list[1]->getDef() && use_list[1]->getDef()->getUse()[0]->isImm())
+        {
+            return 1;
+        }
+        return 0;
+    }
+    return 0;
+    
+}
+
 BinaryMInstruction::BinaryMInstruction(MachineBlock* p, int op, MachineOperand* dst, MachineOperand* src1, MachineOperand* src2, int cond)
 {
     this->parent = p;
@@ -185,6 +201,7 @@ BinaryMInstruction::BinaryMInstruction(MachineBlock* p, int op, MachineOperand* 
     dst->setParent(this);
     src1->setParent(this);
     src2->setParent(this);
+    dst->setDef(this);
 }
 
 void BinaryMInstruction::output() 
@@ -243,6 +260,7 @@ LoadMInstruction::LoadMInstruction(int op,MachineBlock* p,MachineOperand* dst, M
     src1->setParent(this);
     if (src2)
         src2->setParent(this);
+    dst->setDef(this);
 }
 
 void LoadMInstruction::output()
@@ -342,7 +360,7 @@ void StoreMInstruction::output()
 
 
 
-MovMInstruction::MovMInstruction(MachineBlock* p, int op,MachineOperand* dst, MachineOperand* src,int cond)
+MovMInstruction::MovMInstruction(MachineBlock* p, int op,MachineOperand* dst, MachineOperand* src,int cond,MachineOperand* num)
 {
     // TODO
     this->type = MachineInstruction::MOV;
@@ -351,15 +369,20 @@ MovMInstruction::MovMInstruction(MachineBlock* p, int op,MachineOperand* dst, Ma
     this->cond = cond;
     this->def_list.push_back(dst);
     dst->setParent(this);
+    dst->setDef(this);
     this->use_list.push_back(src);
     src->setParent(this);
+    if (num!=nullptr) {
+        this->use_list.push_back(num);
+        num->setParent(this);
+    }
 }
 
 void MovMInstruction::output() 
 {
     // TODO mov dst,src或mvn dst,src
     //加：判断mov还是mvn
-    if(this->op==MovMInstruction::MOV)
+    if(this->op==MovMInstruction::MOV||this->op==MovMInstruction::MOVLSR||this->op==MovMInstruction::MOVASR||this->op==MovMInstruction::MOVLSL)
     {
         fprintf(yyout, "\tmov");
         
@@ -373,6 +396,20 @@ void MovMInstruction::output()
     this->def_list[0]->output();
     fprintf(yyout, ", ");
     this->use_list[0]->output();
+    if (op == MOVLSR) 
+    {
+        fprintf(yyout, ", LSR");
+        this->use_list[1]->output();
+    }
+    if (op == MOVASR) 
+    {
+        fprintf(yyout, ", ASR");
+        this->use_list[1]->output();
+    }
+    if (op == MOVLSL) {
+        fprintf(yyout, ", LSL");
+        this->use_list[1]->output();
+    }
     fprintf(yyout, "\n");
 }
 
@@ -384,6 +421,7 @@ NeonVcvtInstruction::NeonVcvtInstruction(MachineBlock*p,int op,MachineOperand*ds
     this->cond = cond;
     this->def_list.push_back(dst);
     dst->setParent(this);
+    dst->setDef(this);
     this->use_list.push_back(src);
     src->setParent(this);
 }
@@ -412,6 +450,7 @@ BranchMInstruction::BranchMInstruction(MachineBlock* p, int op, MachineOperand* 
     this->op = op;
     this->use_list.push_back(dst);//注意这个dst能往def_list加！
     dst->setParent(this);
+    dst->setDef(this);
 }
 
 void BranchMInstruction::output()
@@ -542,6 +581,39 @@ void StackMInstrcuton::output()
     fprintf(yyout, "}\n");
 }
 
+SmullMInstruction::SmullMInstruction(MachineBlock* p,MachineOperand* dst,MachineOperand* dst1,MachineOperand* src1,MachineOperand* src2,int cond) {
+    this->parent = p;
+    this->type = MachineInstruction::SMULL;
+    this->cond = cond;
+
+    this->def_list.push_back(dst);
+    dst->setParent(this);
+    dst->setDef(this);
+    this->def_list.push_back(dst1);
+    dst1->setParent(this);
+    dst1->setDef(this);
+
+    this->use_list.push_back(src1);
+    src1->setParent(this);
+    this->use_list.push_back(src2);
+    src2->setParent(this);
+}
+
+void SmullMInstruction::output() 
+{
+    fprintf(yyout, "\tumull ");
+    this->def_list[0]->output();
+    fprintf(yyout, ", ");
+    this->def_list[1]->output();
+    fprintf(yyout, ", ");
+    this->use_list[0]->output();
+    fprintf(yyout, ", ");
+    this->use_list[1]->output();
+    fprintf(yyout, "\n");
+}
+
+
+
 MachineFunction::MachineFunction(MachineUnit* p, SymbolEntry* sym_ptr) 
 { 
     this->parent = p; 
@@ -651,6 +723,22 @@ void MachineBlock::output()
             }
         }
     }
+}
+
+void MachineBlock::insertBefore(MachineInstruction* a, MachineInstruction* b) 
+{
+    //机器指令A插在机器指令B的前面
+    auto it = find(inst_list.begin(), inst_list.end(), b);
+    if (it != inst_list.end()){
+        inst_list.insert(it, a);
+        a->setParent(b->getParent());
+    }        
+}
+void MachineBlock::removeInst(MachineInstruction* inst) 
+{
+    auto it = find(inst_list.begin(), inst_list.end(), inst);
+    if (it != inst_list.end())
+        inst_list.erase(it);
 }
 
 std::vector<MachineOperand*> MachineFunction::getSavedRegs() 

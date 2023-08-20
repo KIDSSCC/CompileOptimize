@@ -50,7 +50,6 @@ std::string ConstantSymbolEntry::toStr()
 }
 IdentifierSymbolEntry::IdentifierSymbolEntry(Type *type, std::string name, int scope,int AsParamNum) : SymbolEntry(type, SymbolEntry::VARIABLE), name(name)
 {
-    
     this->scope = scope;
     this->label=-1; 
     this->AsParamNum=AsParamNum;
