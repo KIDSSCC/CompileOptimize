@@ -16,7 +16,7 @@ void Global2Local::pass() {
     {
         pass(*iter++);
     }
-    unstoreGlobal2Const();
+    //unstoreGlobal2Const();
 }
 void Global2Local::pass(Function* func)
 {
@@ -228,7 +228,7 @@ void Global2Local::calculateGlobals()
         }
     }
 }
-
+/*
 void Global2Local::unstoreGlobal2Const()
 {
     for(auto pair:globals)
@@ -368,66 +368,5 @@ void Global2Local::unstoreGlobal2Const()
             }
         }
     }
-    /*
-    for (auto it : globals)
-    {
-        auto type = ((PointerType*)(it.first->getType()))->getType();
-        if (type->isArray())
-        {
-            bool store = false;
-            for (auto it1 : it.second)
-            {
-                for (auto in : it1.second)
-                {
-                    if (in->isGep())
-                    {
-                        auto def = in->getDef();
-                        for (auto it2 = def->use_begin(); it2 != def->use_end();it2++)
-                        {
-                            if ((*it2)->isGep())
-                            {
-                                auto gepDef = (*it2)->getDef();
-                                for (auto it3 = gepDef->use_begin();it3 != gepDef->use_end(); it3++)
-                                {
-                                    if ((*it3)->isGep() || (*it3)->isStore()) {
-                                        // 最多考虑二维数组吧
-                                        store = true;
-                                        break;
-                                    }
-                                }
-                                if (store)
-                                    break;
-                            }
-                            if ((*it2)->isStore()) {
-                                store = true;
-                                break;
-                            }
-                        }
-                        if (store)
-                            break;
-                    }
-                    if (!store)
-                    {
-                        auto name = it.first->toStr();
-                        auto entry = identifiers->lookup(name);
-                        vector<Instruction*> rmvList;
-                        for (auto it1 : it.second)
-                        {
-                            for (auto in : it1.second)
-                            {
-                                if (in->isGep())
-                                {
-                                    auto def = in->getDef();
-                                    auto idx = in->getUse()[1];
-                                    if (!idx->isConst())
-                                        continue;
-                                    int i = idx->getConstVal();
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }*/
-}
+    
+}*/

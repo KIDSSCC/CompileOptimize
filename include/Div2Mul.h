@@ -6,5 +6,4 @@ class Div2Mul {
     Div2Mul(MachineUnit* unit);
     void pass();
     void div2mul(MachineFunction *);
-    ~Div2Mul();
 };

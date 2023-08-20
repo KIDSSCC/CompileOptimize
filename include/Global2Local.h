@@ -18,5 +18,5 @@ public:
     void pass();
     void pass(Function* function);
     void calculateGlobals();
-    void unstoreGlobal2Const();
+    //void unstoreGlobal2Const();
 };
