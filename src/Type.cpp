@@ -15,7 +15,7 @@ Type* TypeSystem::boolType = &commonBool;
 Type* TypeSystem::floatType = &commonFloat;
 Type* TypeSystem::floatconstType = &commonFloatConst;
 
-int Type::getOSize()  
+long long Type::getOSize()  
 { 
     if(this->isInt()) return ((IntType *)this)->getSize();
     else if(this->isFloat())  return ((FloatType *)this)->getSize();

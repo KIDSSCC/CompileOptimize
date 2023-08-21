@@ -755,17 +755,21 @@ void StoreInstruction::genMachineCode(AsmBuilder* builder)
         //存储一个变量
         //超过一定范围的操作数可能需要重新加载到寄存器中。
         auto fp = genMachineReg(11);
-        auto offset = genMachineImm(dynamic_cast<TemporarySymbolEntry*>(operands[0]->getEntry())->getOffset());
+        int off=dynamic_cast<TemporarySymbolEntry*>(operands[0]->getEntry())->getOffset();
+        auto offset = genMachineImm(off);
         if(operands[1]->getType()->isFloat())
         {
             cur_inst=new StoreMInstruction(StoreMInstruction::VSTR,cur_block, src, fp, offset);
         }
         else
         {
-            auto operand = genMachineVReg();
-            cur_inst=new LoadMInstruction(LoadMInstruction::LDR,cur_block, operand, offset);
-            cur_block->InsertInst(cur_inst);
-            offset=operand;
+            if(off>255||off<-255)
+            {
+                auto operand = genMachineVReg();
+                cur_inst=new LoadMInstruction(LoadMInstruction::LDR,cur_block, operand, offset);
+                cur_block->InsertInst(cur_inst);
+                offset=operand;
+            }
             cur_inst = new StoreMInstruction(StoreMInstruction::STR,cur_block, src, fp, offset);
         }
         cur_block->InsertInst(cur_inst);
@@ -847,10 +851,13 @@ void BinaryInstruction::genMachineCode(AsmBuilder* builder)
         }
         else
         {
-            auto internal_reg = genMachineVReg();
-            cur_inst = new LoadMInstruction(LoadMInstruction::LDR,cur_block, internal_reg, src2);
-            cur_block->InsertInst(cur_inst);
-            src2 = new MachineOperand(*internal_reg);
+            if(src2->getVal()>255||src2->getVal()<-255||opcode==MUL||opcode==DIV||opcode==MOD)
+            {
+                auto internal_reg = genMachineVReg();
+                cur_inst = new LoadMInstruction(LoadMInstruction::LDR,cur_block, internal_reg, src2);
+                cur_block->InsertInst(cur_inst);
+                src2 = new MachineOperand(*internal_reg);
+            }
         }
     }
     /*

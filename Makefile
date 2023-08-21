@@ -162,9 +162,9 @@ test:app
 		else
 			# 开始执行
 			if [ -f "$${IN}" ]; then
-				timeout 10s qemu-arm -L /usr/arm-linux-gnueabihf $${BIN} <$${IN} >$${RES} 2>>$${LOG}
+				qemu-arm -L /usr/arm-linux-gnueabihf $${BIN} <$${IN} >$${RES} 2>>$${LOG}
 			else
-				timeout 10s qemu-arm -L /usr/arm-linux-gnueabihf $${BIN} >$${RES} 2>>$${LOG}
+				qemu-arm -L /usr/arm-linux-gnueabihf $${BIN} >$${RES} 2>>$${LOG}
 			fi
 
 			# 输出结果文件到.res

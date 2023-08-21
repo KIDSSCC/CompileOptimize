@@ -107,6 +107,10 @@ void FunctionDef::genCode()
                 {
                     new RetInstruction(new Operand(new ConstantSymbolEntry(TypeSystem::intType, 0)),truebranch);
                 }
+                else if(((FunctionType*)(se->getType()))->getRetType()==TypeSystem::floatType)
+                {
+                    new RetInstruction(new Operand(new ConstantSymbolEntry(TypeSystem::floatType, 0)),truebranch);
+                }
                 if (((FunctionType*)(se->getType()))->getRetType() ==TypeSystem::voidType)
                 {
                     new RetInstruction(nullptr, truebranch);
@@ -117,6 +121,10 @@ void FunctionDef::genCode()
                 if (((FunctionType*)(se->getType()))->getRetType() ==TypeSystem::intType)
                 {
                     new RetInstruction(new Operand(new ConstantSymbolEntry(TypeSystem::intType, 0)),falsebranch);
+                }
+                else if (((FunctionType*)(se->getType()))->getRetType() ==TypeSystem::floatType)
+                {
+                    new RetInstruction(new Operand(new ConstantSymbolEntry(TypeSystem::floatType, 0)),falsebranch);
                 }
                 if (((FunctionType*)(se->getType()))->getRetType() ==TypeSystem::voidType)
                 {
@@ -1019,19 +1027,25 @@ void FunctionDef::typeCheck(Type* rtnType )
     SymbolEntry* se = this->getse();
     Type* myret = ((FunctionType*)(se->getType()))->getRetType();
     StmtNode* stmt = this->stmt;
-    /*if (stmt == nullptr) {
-        if (myret != TypeSystem::voidType)
-            {fprintf(stderr, "fuction %s Block is Null,but rtnType is not void,but %s\n",((IdentifierSymbolEntry *)se)->getName().c_str(),myret->toStr().c_str());
-             exit(EXIT_FAILURE);}
-    }*/ //102if空语句会有问题？？？
 
     stmt->typeCheck(myret); //从函数这里不再流传nullptr而是函数的返回值，为了让return知道
 
     if(!ifFuncHasRtnstmt && myret != TypeSystem::voidType)
-       {
+    {
+        if(myret->isInt())
+        {
+            //this->stmt->setNext(new ReturnStmt(new Constant(new ConstantSymbolEntry(TypeSystem::intType, 10))));
+        }
+        else if(myret->isFloat())
+        {
+            //this->stmt->setNext(new ReturnStmt(new Constant(new ConstantSymbolEntry(TypeSystem::floatType, 0))));
+        }
+        else
+        {
             fprintf(stderr, "fuction  %s has no rtnstmt,but it should return type:%s\n",((IdentifierSymbolEntry *)se)->getName().c_str(),myret->toStr().c_str());
             exit(EXIT_FAILURE);
-       } 
+        }
+    } 
    
 }
 

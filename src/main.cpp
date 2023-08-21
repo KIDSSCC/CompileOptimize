@@ -78,11 +78,11 @@ int main(int argc, char *argv[])
 
     //词法分析，语法分析
     yyparse();
+    ast.typeCheck(nullptr); 
     if(dump_ast)
     {
         ast.output();
     }
-    ast.typeCheck(nullptr); 
     //生成中间代码
     ast.genCode(&unit);
     
@@ -99,8 +99,8 @@ int main(int argc, char *argv[])
     
     //生成汇编代码
     unit.genMachineCode(&mUnit);
-    Div_Mod d_m(&mUnit);
-    d_m.pass();
+    // Div_Mod d_m(&mUnit);
+    // d_m.pass();
 
 
     //寄存器分配

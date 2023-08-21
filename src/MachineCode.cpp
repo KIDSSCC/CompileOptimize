@@ -848,7 +848,7 @@ void MachineUnit::PrintGlobalDecl()
         {
             fprintf(yyout, "\t.global %s\n", se->toStr().c_str()); 
             fprintf(yyout, "\t.align 4\n");
-            fprintf(yyout, "\t.size %s, %d\n", se->toStr().c_str(),se->getType()->getOSize() / 8);
+            fprintf(yyout, "\t.size %s, %lld\n", se->toStr().c_str(),se->getType()->getOSize() / 8);
             fprintf(yyout, "%s:\n", se->toStr().c_str());
             if (!se->getType()->isArray())
             {
@@ -902,7 +902,7 @@ void MachineUnit::PrintGlobalDecl()
             IdentifierSymbolEntry* se = (IdentifierSymbolEntry*)global_id_list[constIdx[i]];
             fprintf(yyout, "\t.global %s\n", se->toStr().c_str()); 
             fprintf(yyout, "\t.align 4\n");
-            fprintf(yyout, "\t.size %s, %d\n", se->toStr().c_str(),se->getType()->getOSize() / 8);//换
+            fprintf(yyout, "\t.size %s, %lld\n", se->toStr().c_str(),se->getType()->getOSize() / 8);//换
             fprintf(yyout, "%s:\n", se->toStr().c_str());
             if (!se->getType()->isArray()) 
             {
@@ -926,7 +926,7 @@ void MachineUnit::PrintGlobalDecl()
             IdentifierSymbolEntry* se = dynamic_cast<IdentifierSymbolEntry*>(global_id_list[zeroIdx[i]]);
             if(se->getType()->isArray())
             {
-                fprintf(yyout, "\t.comm %s, %d, 4\n", se->toStr().c_str(),se->getType()->getOSize() / 8);
+                fprintf(yyout, "\t.comm %s, %lld, 4\n", se->toStr().c_str(),se->getType()->getOSize() / 8);
             }
         }
     }

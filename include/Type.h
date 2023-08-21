@@ -26,7 +26,7 @@ public:
     int getkind(){return kind;};
 
     //getOSize用于在不确定具体类型时，通过让基类type来确定类型并返回位数 bit
-    int getOSize() ;
+    long long getOSize() ;
     
     virtual bool whetherConst(){return false;};
     bool isIndirectInt()const;
@@ -36,25 +36,25 @@ public:
 class IntType : public Type
 {
 private:
-    int size;
+    long long  size;
     bool ifconst;
 public:
-    IntType(int size,bool ifconst=false) : Type(Type::INT), size(size),ifconst(ifconst){};
+    IntType(long long size,bool ifconst=false) : Type(Type::INT), size(size),ifconst(ifconst){};
     std::string toStr();
 
-    int getSize(){return size;};
+    long long getSize(){return size;};
     bool whetherConst(){return ifconst;}
 };
 
 class FloatType : public Type
 {
 private:
-    int size;
+    long long size;
     bool ifconst;
 public:
-    FloatType(int size, bool ifconst = false) : Type(Type::FLOAT), size(size), ifconst(ifconst){};
+    FloatType(long long size, bool ifconst = false) : Type(Type::FLOAT), size(size), ifconst(ifconst){};
     std::string toStr();
-    int getSize(){return size;};
+    long long getSize(){return size;};
     bool whetherConst(){return ifconst;}
 };
 
@@ -105,31 +105,25 @@ class ArrayType : public Type
 {
 private:
     Type* artype;  //数组类型（int、float），还是多维数组，多维数组第二维及以上的话，artype是array
-    int num;        //数组元素个数
+    long long num;        //数组元素个数
     bool ifconst;   //是否常量数组
-    int size=0;       //数组总位数，
+    long long int size=0;       //数组总位数，
     Type* parenttype = nullptr;//在嵌套数组中，其向上一层的类型
 public:
     ArrayType( Type* artype,int num,bool ifconst=false) : Type(Type::ARRAY), artype(artype), num(num),ifconst(ifconst) 
     {
         this->size=artype->getOSize()*num;
-        /*if(artype->isInt()) 
-            this->size=((IntType *)artype)->getSize() * num;
-        if(artype->isFloat()) 
-            this->size=((FloatType *)artype)->getSize() * num;
-        if(artype->isArray()) 
-            this->size=((ArrayType *)artype)->getArraySize() * num;
-        */
     };
     std::string toStr();
     Type* getArrayType() const { return artype; };
     int getArrayNum() const {return num;};
     bool whetherConst(){ return ifconst; };
-    int getArraySize() const {return size;}
+    long long  getArraySize() const {return size;}
 
     //parentType的getset
     Type* getParentType() const { return parenttype; };
     void setParentType(Type* parenttype) { this->parenttype = parenttype; };
+    
 
     //在多维数组中，确定其最终到底是一个整型还是浮点
     Type* getFinalType() 
